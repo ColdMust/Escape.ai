@@ -1,0 +1,49 @@
+═══════════════════════════════════════════════
+        SIMULACRO.EXE — RPG em Java
+        Fase 1 MVP
+═══════════════════════════════════════════════
+
+REQUISITO: Java JDK 11 ou superior instalado.
+(Não o Java comum — precisa do JDK, que inclui o compilador)
+
+Download JDK: https://www.oracle.com/java/technologies/downloads/
+
+───────────────────────────────────────────────
+  COMO RODAR
+───────────────────────────────────────────────
+
+▶ WINDOWS
+  Dê duplo clique em: run.bat
+  Ou no terminal:     run.bat
+
+▶ LINUX / MAC
+  No terminal:
+    chmod +x run.sh
+    ./run.sh
+
+───────────────────────────────────────────────
+  O QUE O SCRIPT FAZ AUTOMATICAMENTE
+───────────────────────────────────────────────
+  1. Verifica se o JDK está instalado
+  2. Compila todos os arquivos .java
+  3. Empacota em SIMULACRO.jar
+  4. Executa o jogo
+
+  Na próxima vez que rodar, o JAR já existe
+  e você pode executar diretamente com:
+    java -jar SIMULACRO.jar
+
+───────────────────────────────────────────────
+  ESTRUTURA DO PROJETO
+───────────────────────────────────────────────
+
+  src/
+  ├── Main.java
+  ├── characters/   Personagem, Jogador, Inimigo
+  ├── items/        Item
+  ├── battle/       BattleSystem
+  ├── missions/     Mission, MissionSystem
+  ├── levels/       LevelSystem
+  └── game/         Game
+
+═══════════════════════════════════════════════
