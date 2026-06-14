@@ -1,26 +1,32 @@
 package characters;
 
+import items.DropTable;
 import items.Item;
 
 public class Inimigo extends Personagem {
 
     private int xpRecompensa;
     private int fragmentosRecompensa;
-    private Item itemDrop;       // pode ser null
-    private String descricao;   // lore do inimigo
+    private String descricao;
 
     // ── Construtor ───────────────────────────────────────────────
     public Inimigo(String nome, int vida, int ataque, int defesa,
                    int xpRecompensa, int fragmentos, String descricao) {
         super(nome, vida, ataque, defesa);
-        this.xpRecompensa        = xpRecompensa;
+        this.xpRecompensa         = xpRecompensa;
         this.fragmentosRecompensa = fragmentos;
-        this.descricao           = descricao;
-        this.itemDrop            = null;
+        this.descricao            = descricao;
     }
 
-    public void setItemDrop(Item item) {
-        this.itemDrop = item;
+    /**
+     * Sorteia e retorna um único item de drop ao ser derrotado.
+     * O resultado é determinado na hora da chamada (não pré-fixado),
+     * garantindo que cada morte tenha sua própria rolagem independente.
+     *
+     * @return o Item sorteado, ou {@code null} se não houver drop.
+     */
+    public Item rolarDrop() {
+        return DropTable.sortearDrop();
     }
 
     // ── Fábrica de inimigos ──────────────────────────────────────
@@ -33,13 +39,11 @@ public class Inimigo extends Personagem {
     }
 
     public static Inimigo criarBugVoador() {
-        Inimigo e = new Inimigo(
+        return new Inimigo(
             "Bug Voador", 25, 12, 1,
             35, 8,
             "Erro de runtime que ganhou consciência e voa pelo sistema."
         );
-        e.setItemDrop(items.Item.criarPatchExe());
-        return e;
     }
 
     public static Inimigo criarProcessoDaemon() {
@@ -61,6 +65,5 @@ public class Inimigo extends Personagem {
     // ── Getters ──────────────────────────────────────────────────
     public int    getXpRecompensa()         { return xpRecompensa; }
     public int    getFragmentosRecompensa() { return fragmentosRecompensa; }
-    public Item   getItemDrop()             { return itemDrop; }
     public String getDescricao()            { return descricao; }
 }

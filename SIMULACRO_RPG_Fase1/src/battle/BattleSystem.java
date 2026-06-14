@@ -1,7 +1,7 @@
 package battle;
 
-import characters.Jogador;
 import characters.Inimigo;
+import characters.Jogador;
 import items.Item;
 import java.util.Scanner;
 
@@ -142,9 +142,13 @@ public class BattleSystem {
             System.out.println("+ " + inimigo.getXpRecompensa() + " XP");
             System.out.println("+ " + inimigo.getFragmentosRecompensa() + " Fragmentos de Código");
 
-            if (inimigo.getItemDrop() != null) {
-                jogador.adicionarItem(inimigo.getItemDrop());
-                System.out.println("+ Item obtido: " + inimigo.getItemDrop().getNome());
+            // ── Sorteio de drop de item ────────────────────────
+            Item drop = inimigo.rolarDrop();
+            if (drop != null) {
+                jogador.adicionarItem(drop);
+                System.out.println("💾 Item obtido: " + drop.getNome());
+            } else {
+                System.out.println("Nenhum item dropado.");
             }
 
             if (subiu) {

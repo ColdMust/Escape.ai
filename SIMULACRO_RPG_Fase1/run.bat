@@ -28,6 +28,7 @@ javac -encoding UTF-8 -d out ^
     src\characters\Jogador.java ^
     src\characters\Inimigo.java ^
     src\items\Item.java ^
+    src\items\DropTable.java ^
     src\battle\BattleSystem.java ^
     src\missions\Mission.java ^
     src\missions\MissionSystem.java ^
