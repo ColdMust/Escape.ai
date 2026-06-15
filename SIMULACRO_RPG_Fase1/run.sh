@@ -34,6 +34,7 @@ javac -encoding UTF-8 -d out \
     src/characters/Personagem.java \
     src/characters/Jogador.java \
     src/characters/Inimigo.java \
+    src/characters/AssistenciaInteligente.java \
     src/items/Item.java \
     src/items/DropTable.java \
     src/battle/BattleSystem.java \
