@@ -1,6 +1,6 @@
 ═══════════════════════════════════════════════
         SIMULACRO.EXE — RPG em Java
-        Fase 1 MVP
+        Fase 1 + Fase 2 (Puzzles)
 ═══════════════════════════════════════════════
 
 REQUISITO: Java JDK 11 ou superior instalado.
@@ -9,7 +9,7 @@ REQUISITO: Java JDK 11 ou superior instalado.
 Download JDK: https://www.oracle.com/java/technologies/downloads/
 
 ───────────────────────────────────────────────
-  COMO RODAR
+  COMO RODAR (TERMINAL — Java)
 ───────────────────────────────────────────────
 
 ▶ WINDOWS
@@ -20,6 +20,16 @@ Download JDK: https://www.oracle.com/java/technologies/downloads/
   No terminal:
     chmod +x run.sh
     ./run.sh
+
+───────────────────────────────────────────────
+  COMO RODAR (NAVEGADOR — Web)
+───────────────────────────────────────────────
+
+▶ WINDOWS (mais fácil)
+  Dê duplo clique em: web\abrir.bat
+  Ou abra diretamente: web\index.html
+
+  Interface 100% terminal com artes ASCII.
 
 ───────────────────────────────────────────────
   O QUE O SCRIPT FAZ AUTOMATICAMENTE
@@ -40,8 +50,9 @@ Download JDK: https://www.oracle.com/java/technologies/downloads/
   src/
   ├── Main.java
   ├── characters/   Personagem, Jogador, Inimigo
-  ├── items/        Item
+  ├── items/        Item, DropTable
   ├── battle/       BattleSystem
+  ├── puzzles/      Puzzle, PuzzleSystem (Fase 2)
   ├── missions/     Mission, MissionSystem
   ├── levels/       LevelSystem
   └── game/         Game

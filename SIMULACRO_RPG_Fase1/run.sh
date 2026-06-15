@@ -38,6 +38,13 @@ javac -encoding UTF-8 -d out \
     src/items/Item.java \
     src/items/DropTable.java \
     src/battle/BattleSystem.java \
+    src/puzzles/Puzzle.java \
+    src/puzzles/PuzzleSystem.java \
+    src/puzzles/OperadorWhilePuzzle.java \
+    src/puzzles/OperadorComparacaoPuzzle.java \
+    src/puzzles/ValorCondicaoPuzzle.java \
+    src/puzzles/EstruturaForPuzzle.java \
+    src/puzzles/ExpressaoLogicaPuzzle.java \
     src/missions/Mission.java \
     src/missions/MissionSystem.java \
     src/levels/LevelSystem.java \

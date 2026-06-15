@@ -5,26 +5,30 @@ import items.Item;
 
 public class Mission {
 
-    public enum Status { DISPONIVEL, EM_ANDAMENTO, CONCLUIDA }
+    public enum Status { DISPONIVEL, EM_ANDAMENTO, CONCLUIDA, BLOQUEADA }
 
-    private String nome;
-    private String descricao;
-    private String objetivo;
-    private int    xpRecompensa;
-    private int    fragmentosRecompensa;
-    private Item   itemRecompensa;   // pode ser null
+    private final String nome;
+    private final String descricao;
+    private final String objetivo;
+    private final int xpRecompensa;
+    private final int fragmentosRecompensa;
+    private final String puzzleId;
+    private final int fase;
+    private final String missaoRequerida;
+
+    private Item itemRecompensa;
     private Status status;
-    private boolean temPuzzle;
 
-    // ── Construtor ───────────────────────────────────────────────
     public Mission(String nome, String descricao, String objetivo,
-                   int xp, int fragmentos, boolean temPuzzle) {
+                   int xp, int fragmentos, String puzzleId, int fase, String missaoRequerida) {
         this.nome                 = nome;
         this.descricao            = descricao;
         this.objetivo             = objetivo;
         this.xpRecompensa         = xp;
         this.fragmentosRecompensa = fragmentos;
-        this.temPuzzle            = temPuzzle;
+        this.puzzleId             = puzzleId;
+        this.fase                 = fase;
+        this.missaoRequerida      = missaoRequerida;
         this.status               = Status.DISPONIVEL;
     }
 
@@ -33,7 +37,15 @@ public class Mission {
     }
 
     public void iniciar() {
-        this.status = Status.EM_ANDAMENTO;
+        if (status == Status.DISPONIVEL) {
+            this.status = Status.EM_ANDAMENTO;
+        }
+    }
+
+    public void desbloquear() {
+        if (status == Status.BLOQUEADA) {
+            this.status = Status.DISPONIVEL;
+        }
     }
 
     /** Conclui a missão e entrega as recompensas ao jogador. */
@@ -54,12 +66,14 @@ public class Mission {
             System.out.println("\n🎉 LEVEL UP! Agora você é nível " + jogador.getNivel() + "!");
     }
 
-    // ── Getters ──────────────────────────────────────────────────
-    public String getNome()      { return nome; }
-    public String getDescricao() { return descricao; }
-    public String getObjetivo()  { return objetivo; }
-    public Status getStatus()    { return status; }
-    public boolean temPuzzle()   { return temPuzzle; }
+    public String getNome()              { return nome; }
+    public String getDescricao()         { return descricao; }
+    public String getObjetivo()          { return objetivo; }
+    public Status getStatus()            { return status; }
+    public boolean temPuzzle()           { return puzzleId != null; }
+    public String getPuzzleId()          { return puzzleId; }
+    public int getFase()                 { return fase; }
+    public String getMissaoRequerida()   { return missaoRequerida; }
 
     @Override
     public String toString() {
@@ -67,8 +81,11 @@ public class Mission {
         switch (status) {
             case DISPONIVEL:    statusStr = "[ DISPONÍVEL ]"; break;
             case EM_ANDAMENTO:  statusStr = "[EM ANDAMENTO]"; break;
+            case BLOQUEADA:     statusStr = " [ BLOQUEADA ]"; break;
             default:            statusStr = "  [CONCLUÍDA] "; break;
         }
-        return statusStr + " " + nome + "\n             " + descricao;
+        String faseStr = fase == 2 ? " [Fase 2]" : "";
+        String puzzleStr = puzzleId != null ? " 🧩 PUZZLE" : "";
+        return statusStr + faseStr + puzzleStr + " " + nome + "\n             " + descricao;
     }
 }
