@@ -7,6 +7,8 @@ import levels.LevelSystem;
 import missions.MissionSystem;
 import items.Item;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Game {
@@ -22,14 +24,12 @@ public class Game {
         this.rodando = true;
     }
 
-    // ── Ponto de entrada ─────────────────────────────────────────
     public void iniciar() {
         exibirIntro();
         criarPersonagem();
         batalha = new BattleSystem(scanner);
         missoes = new MissionSystem(scanner);
 
-        // Inventário inicial
         jogador.adicionarItem(Item.criarNanobot());
         jogador.adicionarItem(Item.criarPatchExe());
 
@@ -49,7 +49,6 @@ public class Game {
         scanner.close();
     }
 
-    // ── Intro ─────────────────────────────────────────────────────
     private void exibirIntro() {
         System.out.println();
         System.out.println("╔══════════════════════════════════════════╗");
@@ -70,16 +69,15 @@ public class Game {
         System.out.println();
     }
 
-    // ── Criação de personagem ─────────────────────────────────────
     private void criarPersonagem() {
         System.out.print("Qual é o seu nome, Operador? ");
         String nome = scanner.nextLine().trim();
         if (nome.isEmpty()) nome = "Operador";
 
         System.out.println("\nEscolha sua classe:");
-        System.out.println("  [1] Programador  — " + Jogador.Classe.PROGRAMADOR.descricao);
-        System.out.println("  [2] Hacker        — " + Jogador.Classe.HACKER.descricao);
-        System.out.println("  [3] Analista      — " + Jogador.Classe.ANALISTA.descricao);
+        System.out.println("  [1] Programador     — " + Jogador.Classe.PROGRAMADOR.descricao);
+        System.out.println("  [2] Hacker           — " + Jogador.Classe.HACKER.descricao);
+        System.out.println("  [3] Analista         — " + Jogador.Classe.ANALISTA.descricao);
         System.out.println("  [4] Engenheiro de IA — " + Jogador.Classe.ENGENHEIRO.descricao);
         System.out.print("\nSua escolha: ");
 
@@ -87,9 +85,9 @@ public class Game {
         try {
             int op = Integer.parseInt(scanner.nextLine().trim());
             switch (op) {
-                case 2:  classe = Jogador.Classe.HACKER;      break;
-                case 3:  classe = Jogador.Classe.ANALISTA;    break;
-                case 4:  classe = Jogador.Classe.ENGENHEIRO;  break;
+                case 2:  classe = Jogador.Classe.HACKER;     break;
+                case 3:  classe = Jogador.Classe.ANALISTA;   break;
+                case 4:  classe = Jogador.Classe.ENGENHEIRO; break;
                 default: classe = Jogador.Classe.PROGRAMADOR;
             }
         } catch (NumberFormatException e) {
@@ -100,7 +98,6 @@ public class Game {
         System.out.println("\n✅ Personagem criado: " + nome + " [" + classe.nome + "]");
     }
 
-    // ── Menu principal ────────────────────────────────────────────
     private void exibirMenuPrincipal() {
         System.out.println("\n" + "═".repeat(40));
         System.out.println("  SETOR-7  |  Fragmentos: "
@@ -117,11 +114,11 @@ public class Game {
         try {
             int op = Integer.parseInt(scanner.nextLine().trim());
             switch (op) {
-                case 1: explorar();         break;
-                case 2: missoes.interagirComMissao(jogador); break;
-                case 3: LevelSystem.exibirFicha(jogador);    break;
-                case 4: gerenciarInventario();               break;
-                case 0: rodando = false;                     break;
+                case 1: explorar();                                          break;
+                case 2: missoes.interagirComMissao(jogador);                break;
+                case 3: LevelSystem.exibirFicha(jogador);                   break;
+                case 4: gerenciarInventario();                               break;
+                case 0: rodando = false;                                     break;
                 default: System.out.println("Opção inválida.");
             }
         } catch (NumberFormatException e) {
@@ -129,26 +126,38 @@ public class Game {
         }
     }
 
-    // ── Exploração / batalha aleatória ────────────────────────────
+    // ── Exploração ────────────────────────────────────────────────
+
     private void explorar() {
         System.out.println("\n>> Você avança pelos corredores do sistema...");
-        Inimigo inimigo = gerarInimigoAleatorio();
-        boolean venceu = batalha.iniciarBatalha(jogador, inimigo);
+
+        int qtd = BattleSystem.sortearQuantidadeInimigos(jogador);
+
+        // DEBUG — remover após confirmar funcionamento
+        System.out.println(">> [DEBUG] Nível: " + jogador.getNivel()
+                + " | Classe: " + jogador.getClasse().nome
+                + " | Inimigos sorteados: " + qtd);
+
+        List<Inimigo> inimigos = new ArrayList<>();
+        for (int i = 0; i < qtd; i++) inimigos.add(gerarInimigoAleatorio());
+
+        if (qtd > 1)
+            System.out.println(">> ALERTA: " + qtd + " ameaças detectadas simultaneamente!");
+
+        boolean venceu = batalha.iniciarBatalha(jogador, inimigos);
 
         if (venceu) {
-            missoes.notificarVitoria(inimigo.getNome(), jogador);
+            missoes.notificarVitoria(inimigos.get(0).getNome(), jogador);
             missoes.verificarCondicaoConclusao(
                 encontrarMissaoAtiva("Coleta de Fragmentos"), jogador);
         } else {
-            // Derrota: restaura HP mínimo para continuar jogando (respawn)
             System.out.println("\n>> Recuperando instância com 30% de HP...");
             jogador.curar((int)(jogador.getVidaMax() * 0.3));
         }
     }
 
     private Inimigo gerarInimigoAleatorio() {
-        int roll = (int)(Math.random() * 4);
-        switch (roll) {
+        switch ((int)(Math.random() * 4)) {
             case 0:  return Inimigo.criarFirewallCorrompido();
             case 1:  return Inimigo.criarBugVoador();
             case 2:  return Inimigo.criarProcessoDaemon();
@@ -164,6 +173,7 @@ public class Game {
     }
 
     // ── Inventário ────────────────────────────────────────────────
+
     private void gerenciarInventario() {
         if (jogador.getInventario().isEmpty()) {
             System.out.println("\n🎒 Inventário vazio.");
