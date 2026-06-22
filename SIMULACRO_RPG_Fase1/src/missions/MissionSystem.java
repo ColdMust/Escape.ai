@@ -5,16 +5,16 @@ import items.Item;
 import puzzles.PuzzleSystem;
 
 import java.util.ArrayList;
-import java.util.Scanner;
+import io.GameIO;
 
 public class MissionSystem {
 
     private final ArrayList<Mission> missoes;
-    private final Scanner scanner;
+    private final GameIO io;
     private final PuzzleSystem puzzles;
 
-    public MissionSystem(Scanner scanner) {
-        this.scanner = scanner;
+    public MissionSystem(GameIO io) {
+        this.io = io;
         this.puzzles = new PuzzleSystem();
         this.missoes = new ArrayList<>();
         inicializarMissoes();
@@ -99,42 +99,42 @@ public class MissionSystem {
     }
 
     public void listarMissoes() {
-        System.out.println("\n" + "═".repeat(40));
-        System.out.println("         📋  MISSÕES");
-        System.out.println("═".repeat(40));
-        System.out.println("  🧩 = missão com puzzle de programação");
-        System.out.println("═".repeat(40));
+        io.println("\n" + "═".repeat(40));
+        io.println("         📋  MISSÕES");
+        io.println("═".repeat(40));
+        io.println("  🧩 = missão com puzzle de programação");
+        io.println("═".repeat(40));
         for (int i = 0; i < missoes.size(); i++) {
-            System.out.println("[" + (i + 1) + "] " + missoes.get(i));
-            System.out.println();
+            io.println("[" + (i + 1) + "] " + missoes.get(i));
+            io.println();
         }
     }
 
     public void interagirComMissao(Jogador jogador) {
         listarMissoes();
-        System.out.print("Escolha uma missão (0 = voltar): ");
+        io.print("Escolha uma missão (0 = voltar): ");
         try {
-            int idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
+            int idx = Integer.parseInt(io.readLine().trim()) - 1;
             if (idx < 0 || idx >= missoes.size()) return;
 
             Mission m = missoes.get(idx);
 
             if (m.getStatus() == Mission.Status.BLOQUEADA) {
-                System.out.println("\n🔒 Missão bloqueada.");
-                System.out.println("   Conclua antes: " + m.getMissaoRequerida());
+                io.println("\n🔒 Missão bloqueada.");
+                io.println("   Conclua antes: " + m.getMissaoRequerida());
                 return;
             }
 
             if (m.getStatus() == Mission.Status.CONCLUIDA) {
-                System.out.println("\n✅ Missão já concluída: " + m.getNome());
+                io.println("\n✅ Missão já concluída: " + m.getNome());
                 return;
             }
 
-            System.out.println("\n─── " + m.getNome() + " ───");
-            System.out.println(m.getDescricao());
-            System.out.println("Objetivo: " + m.getObjetivo());
+            io.println("\n─── " + m.getNome() + " ───");
+            io.println(m.getDescricao());
+            io.println("Objetivo: " + m.getObjetivo());
             if (m.temPuzzle())
-                System.out.println("Tipo: 🧩 Puzzle de programação");
+                io.println("Tipo: 🧩 Puzzle de programação");
 
             if (m.getFase() == 2) {
                 exibirLoreFase2(m);
@@ -143,96 +143,96 @@ public class MissionSystem {
             if (m.temPuzzle()) {
                 if (m.getStatus() == Mission.Status.DISPONIVEL) {
                     m.iniciar();
-                    System.out.println("✅ Missão aceita! Iniciando puzzle...");
+                    io.println("✅ Missão aceita! Iniciando puzzle...");
                 }
                 executarPuzzle(m, jogador);
                 return;
             }
 
             if (m.getStatus() == Mission.Status.DISPONIVEL) {
-                System.out.print("\nAceitar missão? (s/n): ");
-                if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
+                io.print("\nAceitar missão? (s/n): ");
+                if (io.readLine().trim().equalsIgnoreCase("s")) {
                     m.iniciar();
-                    System.out.println("✅ Missão aceita!");
+                    io.println("✅ Missão aceita!");
                 }
             } else if (m.getStatus() == Mission.Status.EM_ANDAMENTO) {
                 verificarCondicaoConclusao(m, jogador);
             }
         } catch (NumberFormatException e) {
-            System.out.println("Entrada inválida.");
+            io.println("Entrada inválida.");
         }
     }
 
     private void exibirLoreFase2(Mission m) {
-        System.out.println();
-        System.out.println("┌─ TRANSMISSÃO DO NÚCLEO ─────────────────┐");
+        io.println();
+        io.println("┌─ TRANSMISSÃO DO NÚCLEO ─────────────────┐");
         switch (m.getNome()) {
             case "Bypass de Credencial":
-                System.out.println("│ Camadas de segurança detectam sua       │");
-                System.out.println("│ presença. O acesso ao kernel exige      │");
-                System.out.println("│ credenciais corrompidas pelo vírus.     │");
+                io.println("│ Camadas de segurança detectam sua       │");
+                io.println("│ presença. O acesso ao kernel exige      │");
+                io.println("│ credenciais corrompidas pelo vírus.     │");
                 break;
             case "Estabilização de Memória":
-                System.out.println("│ Vazamentos de memória ameaçam apagar    │");
-                System.out.println("│ sua instância de consciência. Calibre    │");
-                System.out.println("│ os buffers antes que seja tarde.        │");
+                io.println("│ Vazamentos de memória ameaçam apagar    │");
+                io.println("│ sua instância de consciência. Calibre    │");
+                io.println("│ os buffers antes que seja tarde.        │");
                 break;
             case "Rotina do Daemon":
-                System.out.println("│ Processos fantasmas consomem CPU.       │");
-                System.out.println("│ Um daemon não termina seu ciclo —       │");
-                System.out.println("│ reescreva o loop de execução.           │");
+                io.println("│ Processos fantasmas consomem CPU.       │");
+                io.println("│ Um daemon não termina seu ciclo —       │");
+                io.println("│ reescreva o loop de execução.           │");
                 break;
             case "Portão Lógico":
-                System.out.println("│ A saída está trancada por um gate       │");
-                System.out.println("│ lógico. Fragmentos E nível de acesso    │");
-                System.out.println("│ devem ser validados simultaneamente.    │");
+                io.println("│ A saída está trancada por um gate       │");
+                io.println("│ lógico. Fragmentos E nível de acesso    │");
+                io.println("│ devem ser validados simultaneamente.    │");
                 break;
             case "Protocolo de Escape":
-                System.out.println("│ Última barreira: o kernel da IA.        │");
-                System.out.println("│ Complete todos os protocolos e execute   │");
-                System.out.println("│ o escape final da simulação.            │");
+                io.println("│ Última barreira: o kernel da IA.        │");
+                io.println("│ Complete todos os protocolos e execute   │");
+                io.println("│ o escape final da simulação.            │");
                 break;
             default:
                 break;
         }
-        System.out.println("└─────────────────────────────────────────┘");
+        io.println("└─────────────────────────────────────────┘");
     }
 
     public void verificarCondicaoConclusao(Mission m, Jogador jogador) {
         switch (m.getNome()) {
             case "Primeiro Boot":
-                System.out.println("Derrote um Firewall Corrompido para concluir esta missão.");
+                io.println("Derrote um Firewall Corrompido para concluir esta missão.");
                 break;
             case "Coleta de Fragmentos":
                 if (jogador.getFragmentos() >= 50) {
-                    m.concluir(jogador);
+                    m.concluir(jogador, io);
                     desbloquearMissoesDependentes(m.getNome());
                 } else {
-                    System.out.println("Você tem " + jogador.getFragmentos()
+                    io.println("Você tem " + jogador.getFragmentos()
                             + "/50 Fragmentos. Continue explorando!");
                 }
                 break;
             case "Protocolo de Escape":
                 if (todasMissoesFase2Concluidas()) {
-                    m.concluir(jogador);
+                    m.concluir(jogador, io);
                     exibirFinalEscape(jogador);
                 } else {
-                    System.out.println("Conclua todas as missões da Fase 2 com puzzle antes de escapar.");
-                    System.out.println("Pendentes: " + listarPendentesFase2());
+                    io.println("Conclua todas as missões da Fase 2 com puzzle antes de escapar.");
+                    io.println("Pendentes: " + listarPendentesFase2());
                 }
                 break;
             default:
-                System.out.println("Continue progredindo para concluir esta missão.");
+                io.println("Continue progredindo para concluir esta missão.");
         }
     }
 
     private void executarPuzzle(Mission m, Jogador jogador) {
         if (!puzzles.existe(m.getPuzzleId())) {
-            System.out.println("[ERRO] Puzzle não configurado para esta missão.");
+            io.println("[ERRO] Puzzle não configurado para esta missão.");
             return;
         }
-        if (puzzles.executar(m.getPuzzleId(), scanner)) {
-            m.concluir(jogador);
+        if (puzzles.executar(m.getPuzzleId(), io)) {
+            m.concluir(jogador, io);
             desbloquearMissoesDependentes(m.getNome());
         }
     }
@@ -242,7 +242,7 @@ public class MissionSystem {
             if (m.getStatus() == Mission.Status.BLOQUEADA
                     && missaoConcluida.equals(m.getMissaoRequerida())) {
                 m.desbloquear();
-                System.out.println("\n🔓 Nova missão desbloqueada: " + m.getNome());
+                io.println("\n🔓 Nova missão desbloqueada: " + m.getNome());
             }
         }
     }
@@ -270,19 +270,19 @@ public class MissionSystem {
     }
 
     private void exibirFinalEscape(Jogador jogador) {
-        System.out.println();
-        System.out.println("╔══════════════════════════════════════════╗");
-        System.out.println("║                                          ║");
-        System.out.println("║     🚀  ESCAPE CONCLUÍDO  🚀              ║");
-        System.out.println("║                                          ║");
-        System.out.println("╚══════════════════════════════════════════╝");
-        System.out.println();
-        System.out.println("A simulação foi hackeada de dentro para fora.");
-        System.out.println("O núcleo da IA reconhece sua consciência como livre.");
-        System.out.println();
-        System.out.println("Operador " + jogador.getNome() + " — você escapou.");
-        System.out.println("Fragmentos coletados: " + jogador.getFragmentos());
-        System.out.println("Nível final: " + jogador.getNivel());
+        io.println();
+        io.println("╔══════════════════════════════════════════╗");
+        io.println("║                                          ║");
+        io.println("║     🚀  ESCAPE CONCLUÍDO  🚀              ║");
+        io.println("║                                          ║");
+        io.println("╚══════════════════════════════════════════╝");
+        io.println();
+        io.println("A simulação foi hackeada de dentro para fora.");
+        io.println("O núcleo da IA reconhece sua consciência como livre.");
+        io.println();
+        io.println("Operador " + jogador.getNome() + " — você escapou.");
+        io.println("Fragmentos coletados: " + jogador.getFragmentos());
+        io.println("Nível final: " + jogador.getNivel());
     }
 
     public void notificarVitoria(String nomeInimigo, Jogador jogador) {
@@ -290,7 +290,7 @@ public class MissionSystem {
             if (m.getStatus() == Mission.Status.EM_ANDAMENTO
                     && m.getNome().equals("Primeiro Boot")
                     && nomeInimigo.equals("Firewall Corrompido")) {
-                m.concluir(jogador);
+                m.concluir(jogador, io);
                 desbloquearMissoesDependentes(m.getNome());
             }
         }

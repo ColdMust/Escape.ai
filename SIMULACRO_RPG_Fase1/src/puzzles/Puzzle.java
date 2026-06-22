@@ -1,6 +1,6 @@
 package puzzles;
 
-import java.util.Scanner;
+import io.GameIO;
 
 public interface Puzzle {
 
@@ -8,13 +8,20 @@ public interface Puzzle {
 
     String getTitulo();
 
-    /** Texto de lore cyberpunk exibido antes do desafio. */
     String getLore();
 
-    /**
-     * Executa o puzzle interativamente.
-     *
-     * @return {@code true} se o jogador resolveu corretamente.
-     */
-    boolean executar(Scanner scanner);
+    /** Texto do código corrompido exibido no desafio. */
+    String getCorpo();
+
+    String getPergunta();
+
+    String getOpcoesTexto();
+
+    int getRespostaCorreta();
+
+    default boolean validarResposta(int resposta) {
+        return resposta == getRespostaCorreta();
+    }
+
+    boolean executar(GameIO io);
 }

@@ -25,11 +25,27 @@ Download JDK: https://www.oracle.com/java/technologies/downloads/
   COMO RODAR (NAVEGADOR — Web)
 ───────────────────────────────────────────────
 
-▶ WINDOWS (mais fácil)
-  Dê duplo clique em: web\abrir.bat
-  Ou abra diretamente: web\index.html
+  Arquitetura: LÓGICA em Java | VISUAL em HTML/JS
 
-  Interface 100% terminal com artes ASCII.
+▶ WINDOWS
+  Dê duplo clique em: run-server.bat
+  Ou: web\serve.bat
+
+  Abre http://localhost:9090 — o servidor Java roda a lógica
+  e o navegador só exibe o terminal visual.
+
+  NÃO abra index.html direto (precisa do servidor Java).
+
+───────────────────────────────────────────────
+  ARQUITETURA
+───────────────────────────────────────────────
+
+  Java (src/)     → Toda a lógica: combate, missões, puzzles
+  JavaScript (web/js/) → Apenas visual: terminal, ASCII, input
+  API REST        → /api/session conecta os dois
+
+  src/io/         → GameIO (ConsoleIO + RemoteGameIO)
+  src/server/     → Servidor HTTP para o navegador
 
 ───────────────────────────────────────────────
   O QUE O SCRIPT FAZ AUTOMATICAMENTE
@@ -49,6 +65,8 @@ Download JDK: https://www.oracle.com/java/technologies/downloads/
 
   src/
   ├── Main.java
+  ├── io/           GameIO, ConsoleIO, RemoteGameIO
+  ├── server/       GameServer (API + arquivos web)
   ├── characters/   Personagem, Jogador, Inimigo
   ├── items/        Item, DropTable
   ├── battle/       BattleSystem

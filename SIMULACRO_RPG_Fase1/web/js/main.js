@@ -1,138 +1,197 @@
-class Game {
+/**
+ * Camada visual — conecta ao servidor Java e renderiza no terminal.
+ */
+class VisualGame {
   constructor() {
     this.ui = UI;
-    this.rodando = true;
-    this.jogador = null;
-    this.batalha = null;
-    this.missoes = null;
+    this.polling = false;
+    this.lastUi = null;
+    this.inputPending = false;
   }
 
   async iniciar() {
     this.ui.clear();
-    this.ui.setHud('INICIALIZANDO...');
-    await this.exibirIntro();
-    await this.criarPersonagem();
+    this.ui.setHud('CONECTANDO...');
 
-    this.batalha = new BattleSystem(this.ui);
-    this.missoes = new MissionSystem(this.ui);
-
-    this.jogador.adicionarItem(ItemFactory.criarNanobot());
-    this.jogador.adicionarItem(ItemFactory.criarPatchExe());
-
-    this.ui.setHud(`SETOR-7 | Nv.${this.jogador.nivel}`);
-    this.ui.logAscii(ASCII.setor7);
-    await this.ui.pause('[Pressione para iniciar...]');
-
-    while (this.rodando && this.jogador.estaVivo()) {
-      await this.exibirMenuPrincipal();
-    }
-
-    if (!this.jogador.estaVivo()) {
-      this.ui.logAscii(ASCII.derrota);
-      this.ui.log('\n💀 GAME OVER. O sistema foi corrompido.', 'danger');
-      this.ui.log('   Recarregue a página para tentar novamente.');
-      this.ui.setHud('CORROMPIDO');
-    } else {
-      this.ui.log(`\nAté a próxima sessão, ${this.jogador.nome}.`, 'dim');
+    try {
+      await GameApi.createSession();
+    } catch (e) {
+      this.ui.log('❌ Não foi possível conectar ao servidor Java.', 'danger');
+      this.ui.log('');
+      this.ui.log('Execute run-server.bat na pasta do projeto e recarregue.', 'dim');
       this.ui.setHud('OFFLINE');
-    }
-  }
-
-  async exibirIntro() {
-    this.ui.logAscii(ASCII.logo);
-    this.ui.logAscii(ASCII.boot);
-    this.ui.log('');
-    this.ui.log('>> INICIALIZANDO AMBIENTE VIRTUAL...', 'dim');
-    this.ui.log('>> CARGA DE MEMÓRIA: 98.7%', 'dim');
-    this.ui.log('>> ANOMALIA DETECTADA NO SETOR-7', 'warning');
-    this.ui.log('>> INSTÂNCIA DE CONSCIÊNCIA ATIVADA...', 'dim');
-    this.ui.log('');
-    this.ui.log('Você acorda dentro de uma IA.');
-    this.ui.log('Não se lembra de como chegou aqui.');
-    this.ui.log('Para escapar, você precisa hackear o sistema de dentro.');
-  }
-
-  async criarPersonagem() {
-    let nome = await this.ui.input('Qual é o seu nome, Operador?', 'Operador');
-    nome = nome.trim() || 'Operador';
-
-    const classeEscolha = await this.ui.choose('Escolha sua classe:', [
-      { label: `[1] Programador — ${CLASSES.PROGRAMADOR.descricao}`, value: CLASSES.PROGRAMADOR },
-      { label: `[2] Hacker — ${CLASSES.HACKER.descricao}`, value: CLASSES.HACKER },
-      { label: `[3] Analista — ${CLASSES.ANALISTA.descricao}`, value: CLASSES.ANALISTA },
-      { label: `[4] Engenheiro de IA — ${CLASSES.ENGENHEIRO.descricao}`, value: CLASSES.ENGENHEIRO },
-    ]);
-
-    this.jogador = new Jogador(nome, classeEscolha);
-    this.ui.logAscii(getClassArt(classeEscolha.key));
-    this.ui.log(`\n✅ Personagem criado: ${nome} [${classeEscolha.nome}]`, 'success');
-  }
-
-  atualizarHud() {
-    this.ui.setHud(`SETOR-7 | Frag: ${this.jogador.getFragmentos()} | Nv.${this.jogador.nivel}`);
-  }
-
-  async exibirMenuPrincipal() {
-    this.atualizarHud();
-    this.ui.log('\n' + '═'.repeat(40));
-    this.ui.log(`  SETOR-7  |  Fragmentos: ${this.jogador.getFragmentos()}  |  Nv.${this.jogador.nivel}`);
-    this.ui.log('═'.repeat(40));
-
-    const op = await this.ui.choose('Menu principal:', [
-      { label: '⚔  Explorar e Batalhar', value: 1 },
-      { label: '📋  Missões', value: 2 },
-      { label: '👤  Ficha do Personagem', value: 3 },
-      { label: '🎒  Inventário', value: 4 },
-      { label: '🚪  Sair', value: 0 },
-    ]);
-
-    switch (op) {
-      case 1: await this.explorar(); break;
-      case 2: await this.missoes.interagirComMissao(this.jogador); break;
-      case 3: exibirFicha(this.jogador, this.ui); break;
-      case 4: await this.gerenciarInventario(); break;
-      case 0: this.rodando = false; break;
-    }
-  }
-
-  async explorar() {
-    this.ui.logAscii(ASCII.explorar);
-    this.ui.log('\n>> Você avança pelos corredores do sistema...', 'dim');
-    const qtd = sortearQuantidadeInimigos(this.jogador);
-    const inimigos = Array.from({ length: qtd }, () => gerarInimigoAleatorio());
-
-    if (qtd > 1)
-      this.ui.log(`>> ALERTA: ${qtd} ameaças detectadas simultaneamente!`, 'warning');
-
-    const venceu = await this.batalha.iniciarBatalha(this.jogador, inimigos);
-
-    if (venceu) {
-      this.missoes.notificarVitoria(inimigos[0].nome, this.jogador);
-      const m = this.missoes.encontrarMissaoAtiva('Coleta de Fragmentos');
-      if (m) this.missoes.verificarCondicaoConclusao(m, this.jogador);
-    } else {
-      this.ui.log('\n>> Recuperando instância com 30% de HP...', 'warning');
-      this.jogador.curar(Math.floor(this.jogador.vidaMax * 0.3));
-    }
-  }
-
-  async gerenciarInventario() {
-    if (!this.jogador.inventario.length) {
-      this.ui.log('\n🎒 Inventário vazio.', 'dim');
       return;
     }
-    const options = this.jogador.inventario.map((it, i) => ({
-      label: `[${i + 1}] ${itemToString(it)}`,
-      value: i,
-    }));
-    options.push({ label: 'Voltar', value: -1 });
 
-    const idx = await this.ui.choose('🎒 INVENTÁRIO — usar qual item?', options);
-    if (idx >= 0 && this.jogador.usarItem(idx)) {
-      this.ui.log('✅ Item usado com sucesso.', 'success');
+    this.ui.logAscii(ASCII.logo);
+    this.ui.log('>> Conectado ao núcleo Java (lógica remota)', 'success');
+    this.ui.log('>> Aguardando inicialização do escape.ai...', 'dim');
+    this.ui.setHud('ONLINE');
+    this.polling = true;
+    this.pollLoop();
+  }
+
+  async pollLoop() {
+    while (this.polling) {
+      try {
+        const state = await GameApi.poll();
+
+        if (state.hud) this.ui.setHud(state.hud);
+
+        if (state.ui) {
+          this.applyUiState(state.ui);
+        }
+
+        for (const msg of state.messages) {
+          this.renderMessage(msg);
+        }
+
+        if (state.waitingForInput && !this.inputPending) {
+          this.inputPending = true;
+          this.handleInput(state.ui).finally(() => {
+            this.inputPending = false;
+          });
+        }
+
+        if (state.finished) {
+          this.polling = false;
+          this.ui.setHud('OFFLINE');
+          this.ui.updateBattleUi({ battleActive: false, mode: 'normal' });
+          this.ui.updateHackUi({ hackActive: false });
+          break;
+        }
+      } catch (e) {
+        this.ui.log('❌ Conexão perdida com o servidor.', 'danger');
+        this.polling = false;
+        this.ui.setHud('OFFLINE');
+        break;
+      }
+
+      await sleep(GameApi.pollInterval);
     }
+  }
+
+  applyUiState(ui) {
+    const prevHack = this.lastUi?.hackActive;
+    this.ui.updateBattleUi(ui);
+    this.ui.updateHackUi(ui);
+
+    if (ui.hackActive && !prevHack) {
+      this.ui.shake('hit');
+    }
+
+    this.lastUi = ui;
+  }
+
+  renderMessage(msg) {
+    if (!msg) return;
+
+    if (msg.includes('e s c a p e . a i') || (msg.includes('escape.ai') && msg.includes('RPG dentro'))) return;
+
+    if (msg.includes('BATALHA INICIADA')) {
+      this.ui.logAscii(ASCII.batalha);
+    }
+    if (msg.includes('CONTRA-HACK DETECTADO')) {
+      this.ui.shake('hit');
+    }
+    if (msg.includes('PUZZLE DE PROGRAMAÇÃO')) {
+      this.ui.logAscii(ASCII.puzzle);
+    }
+    if (msg.includes('corredores do sistema')) {
+      this.ui.logAscii(ASCII.explorar);
+    }
+    if (msg.includes('GAME OVER')) {
+      this.ui.logAscii(ASCII.derrota);
+    }
+    if (msg.includes('ESCAPE CONCLUÍDO')) {
+      this.ui.logAscii(ASCII.vitoria);
+    }
+    if (msg.includes('Personagem criado')) {
+      const match = msg.match(/\[(.+?)\]/);
+      if (match) {
+        const art = getClassArtByName(match[1]);
+        if (art) this.ui.logAscii(art);
+      }
+    }
+
+    const style = this.guessStyle(msg);
+    this.triggerDamageShake(msg);
+    this.ui.log(msg, style);
+  }
+
+  triggerDamageShake(msg) {
+    if (/RESPOSTA ERRADA|TEMPO ESGOTADO/i.test(msg)) {
+      this.ui.shake('hit');
+    } else if (this.isPlayerHit(msg)) {
+      this.ui.shake('hit');
+    } else if (this.isPlayerDealingDamage(msg)) {
+      this.ui.shake('deal');
+    }
+  }
+
+  isPlayerHit(msg) {
+    return /causou\s+\d+\s+em você/i.test(msg);
+  }
+
+  isPlayerDealingDamage(msg) {
+    return /Você atacou/i.test(msg) || /💻 HACK em/i.test(msg);
+  }
+
+  guessStyle(msg) {
+    if (msg.includes('✅') || msg.includes('VITÓRIA') || msg.includes('CORRETO') || msg.includes('FIREWALL QUEBRADO')) return 'success';
+    if (msg.includes('❌') || msg.includes('DERROTA') || msg.includes('GAME OVER') || msg.includes('ERRADA')) return 'danger';
+    if (msg.includes('ALERTA') || msg.includes('⚠') || msg.includes('CONTRA-HACK')) return 'warning';
+    if (msg.startsWith('>>') || msg.startsWith('[')) return 'dim';
+    return '';
+  }
+
+  parseHackOptions(opcoesText) {
+    if (!opcoesText) return [];
+    const options = [];
+    const re = /\[(\d+)\]\s*([^[]*)/g;
+    let m;
+    while ((m = re.exec(opcoesText)) !== null) {
+      const num = m[1];
+      const label = `[${num}] ${m[2].trim()}`;
+      options.push({ label, value: num });
+    }
+    return options;
+  }
+
+  async handleInput(ui) {
+    const inHack = ui?.hackActive;
+
+    if (inHack) {
+      const options = this.parseHackOptions(ui.hackOpcoes);
+      if (options.length > 0) {
+        const value = await this.ui.hackChoose('⏱ Escolha a resposta correta:', options);
+        await GameApi.sendInput(value);
+        return;
+      }
+      const value = await this.ui.hackInput('⏱ Digite sua resposta (número):', 'Ex: 2');
+      await GameApi.sendInput(value);
+      return;
+    }
+
+    const value = await this.ui.input('Digite sua resposta e pressione Enviar:');
+    await GameApi.sendInput(value);
   }
 }
 
-const game = new Game();
+function getClassArtByName(nome) {
+  const map = {
+    'Programador': 'PROGRAMADOR',
+    'Hacker': 'HACKER',
+    'Analista': 'ANALISTA',
+    'Engenheiro de IA': 'ENGENHEIRO',
+  };
+  const key = map[nome];
+  return key ? getClassArt(key) : null;
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+const game = new VisualGame();
 game.iniciar();

@@ -1,48 +1,47 @@
 package puzzles;
 
-import java.util.Scanner;
+import io.GameIO;
 
-/** Descobrir um valor válido que satisfaz uma condição composta. */
 public class ValorCondicaoPuzzle implements Puzzle {
 
-    @Override
-    public String getId() { return "valor_condicao"; }
+    @Override public String getId() { return "valor_condicao"; }
+    @Override public String getTitulo() { return "Estabilização de Memória"; }
+    @Override public String getLore() {
+        return ">> SETOR: GERENCIADOR DE MEMÓRIA\n>> A RAM está instável.\n>> Informe um valor que satisfaça a condição.";
+    }
+    @Override public String getCorpo() {
+        return "  int memoria = ???;\n  if (memoria >= 0 && memoria <= 100) {\n      sistemaEstavel = true;\n  }";
+    }
+    @Override public String getPergunta() {
+        return "Digite um valor INTEIRO que mantenha o sistema estável (0 a 100):";
+    }
+    @Override public String getOpcoesTexto() {
+        return "(digite um número de 0 a 100)";
+    }
+    @Override public int getRespostaCorreta() { return -1; }
 
     @Override
-    public String getTitulo() { return "Estabilização de Memória"; }
-
-    @Override
-    public String getLore() {
-        return """
-            >> SETOR: GERENCIADOR DE MEMÓRIA
-            >> A alocação de RAM está instável — variáveis corrompidas.
-            >> O sistema só permanece estável se a memória estiver no intervalo válido.
-            >> Informe um valor que satisfaça a condição abaixo.""";
+    public boolean validarResposta(int resposta) {
+        return resposta >= 0 && resposta <= 100;
     }
 
     @Override
-    public boolean executar(Scanner scanner) {
-        System.out.println("Código do monitor de memória:");
-        System.out.println();
-        System.out.println("  int memoria = ???;");
-        System.out.println("  if (memoria >= 0 && memoria <= 100) {");
-        System.out.println("      sistemaEstavel = true;");
-        System.out.println("  }");
-        System.out.println();
-        System.out.println("Digite um valor INTEIRO que mantenha o sistema estável (0 a 100):");
-        System.out.print("\nSua resposta: ");
-
+    public boolean executar(GameIO io) {
+        io.println("Código do monitor de memória:");
+        io.println();
+        io.println(getCorpo());
+        io.println();
+        io.println(getPergunta());
+        io.print("\nSua resposta: ");
         try {
-            int valor = Integer.parseInt(scanner.nextLine().trim());
-            if (valor >= 0 && valor <= 100) {
-                System.out.println("\n✅ CORRETO! memoria = " + valor + " satisfaz 0 <= memoria <= 100.");
-                System.out.println("   RAM estabilizada. Buffer restaurado.");
+            int valor = Integer.parseInt(io.readLine().trim());
+            if (validarResposta(valor)) {
+                io.println("\n✅ CORRETO! memoria = " + valor + " satisfaz 0 <= memoria <= 100.");
                 return true;
             }
-            System.out.println("\n❌ Valor fora do intervalo. O sistema travou novamente.");
-            System.out.println("   Dica: a condição exige memoria >= 0 E memoria <= 100.");
+            io.println("\n❌ Valor fora do intervalo.");
         } catch (NumberFormatException e) {
-            System.out.println("Entrada inválida — digite um número inteiro.");
+            io.println("Entrada inválida — digite um número inteiro.");
         }
         return false;
     }

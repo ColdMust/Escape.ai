@@ -31,6 +31,9 @@ mkdir -p out
 echo " Compilando fontes..."
 
 javac -encoding UTF-8 -d out \
+    src/io/GameIO.java \
+    src/io/ConsoleIO.java \
+    src/io/RemoteGameIO.java \
     src/characters/Personagem.java \
     src/characters/Jogador.java \
     src/characters/Inimigo.java \

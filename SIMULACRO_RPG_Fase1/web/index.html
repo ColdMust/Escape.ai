@@ -1,49 +1,169 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIMULACRO.EXE — RPG</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div class="scanlines"></div>
-  <div class="app">
-    <header class="title-bar">
-      <span class="dot red"></span>
-      <span class="dot yellow"></span>
-      <span class="dot green"></span>
-      <span class="title-text">SIMULACRO.EXE — terminal://setor-7</span>
-      <span class="status-pill" id="hud">OFFLINE</span>
-    </header>
 
-    <div class="game-layout">
-      <section class="panel-terminal">
-        <div class="terminal-shell">
-          <div class="terminal-toolbar">
-            <span class="terminal-label">TERMINAL</span>
-            <button type="button" class="terminal-scroll-btn" id="btn-scroll-bottom" title="Ir ao final">↓ Final</button>
-          </div>
-          <main class="terminal" id="terminal" aria-live="polite"></main>
-        </div>
-        <footer class="action-panel" id="action-panel">
-          <p class="action-prompt" id="action-prompt"></p>
-          <div class="action-buttons" id="action-buttons"></div>
-          <form class="action-input-form hidden" id="action-input-form">
-            <input type="text" id="action-input" autocomplete="off" spellcheck="false">
-            <button type="submit">Enviar</button>
-          </form>
-        </footer>
-      </section>
+<html lang="pt-BR">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>escape.ai — RPG</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+  <div class="scanlines"></div>
+
+
+
+  <div class="hack-overlay hidden" id="hack-overlay">
+
+    <div class="hack-glitch"></div>
+
+    <div class="hack-content">
+
+      <div class="hack-header">
+
+        <span class="hack-alert">⚠ CONTRA-HACK ATIVO ⚠</span>
+
+        <span class="hack-timer" id="hack-timer">30</span>
+
+      </div>
+
+      <p class="hack-hacker" id="hack-hacker"></p>
+
+      <h2 class="hack-title" id="hack-title"></h2>
+
+      <p class="hack-lore" id="hack-lore"></p>
+
+      <pre class="hack-code" id="hack-code"></pre>
+
+      <p class="hack-question" id="hack-question"></p>
+
+      <p class="hack-options" id="hack-options"></p>
+
+      <div class="hack-actions" id="hack-actions">
+        <p class="hack-action-prompt" id="hack-action-prompt"></p>
+        <div class="hack-action-buttons" id="hack-action-buttons"></div>
+        <form class="hack-action-form hidden" id="hack-action-form">
+          <input type="text" id="hack-action-input" autocomplete="off" spellcheck="false" inputmode="numeric">
+          <button type="submit">Enviar resposta</button>
+        </form>
+      </div>
+
     </div>
+
   </div>
 
+
+
+  <div class="app" id="app">
+
+    <header class="title-bar">
+
+      <span class="dot red"></span>
+
+      <span class="dot yellow"></span>
+
+      <span class="dot green"></span>
+
+      <span class="title-text">escape.ai — terminal://setor-7</span>
+
+      <span class="status-pill" id="hud">OFFLINE</span>
+
+    </header>
+
+
+
+    <div class="game-layout" id="game-layout">
+
+      <aside class="panel-hp hidden" id="panel-hp" aria-label="Status de vida">
+
+        <div class="hp-header">STATUS</div>
+
+        <div class="hp-bar-group" id="hp-bar-operador">
+
+          <div class="hp-label">
+
+            <span>VIDA</span>
+
+            <span class="hp-values" id="hp-operador-text">—/—</span>
+
+          </div>
+
+          <div class="hp-track"><div class="hp-fill hp-fill-primary" id="hp-operador-fill"></div></div>
+
+        </div>
+
+        <div class="hp-enemies-section hidden" id="hp-enemies-section">
+          <div class="hp-section-label">INIMIGOS</div>
+          <div class="hp-enemies" id="hp-enemies"></div>
+        </div>
+
+      </aside>
+
+
+
+      <section class="panel-terminal" id="panel-terminal">
+
+        <div class="terminal-shell">
+
+          <div class="terminal-toolbar">
+
+            <span class="terminal-label">TERMINAL</span>
+
+            <button type="button" class="terminal-scroll-btn" id="btn-scroll-bottom" title="Ir ao final">↓ Final</button>
+
+          </div>
+
+          <main class="terminal" id="terminal" aria-live="polite"></main>
+
+        </div>
+
+        <footer class="action-panel" id="action-panel">
+
+          <p class="action-prompt" id="action-prompt"></p>
+
+          <div class="action-buttons" id="action-buttons"></div>
+
+          <form class="action-input-form hidden" id="action-input-form">
+
+            <input type="text" id="action-input" autocomplete="off" spellcheck="false">
+
+            <button type="submit">Enviar</button>
+
+          </form>
+
+        </footer>
+
+      </section>
+
+    </div>
+
+  </div>
+
+
+
   <script src="js/ui.js"></script>
+
   <script src="js/ascii.js"></script>
-  <script src="js/logic.js"></script>
+
+  <script src="js/api.js"></script>
+
   <script src="js/main.js"></script>
+
 </body>
+
 </html>
+
+

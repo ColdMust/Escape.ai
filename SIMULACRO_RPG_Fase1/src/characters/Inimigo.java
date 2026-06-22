@@ -8,7 +8,8 @@ public class Inimigo extends Personagem {
     private int xpRecompensa, fragmentosRecompensa;
     private String descricao;
     private boolean controlado = false;
-    private boolean imuneTurno = false; // imune no turno em que foi controlado
+    private boolean imuneTurno = false;
+    private boolean counterHack = false;
 
     public Inimigo(String nome, int vida, int ataque, int defesa,
                    int xp, int frags, String descricao) {
@@ -39,6 +40,11 @@ public class Inimigo extends Personagem {
     public int     getFragmentosRecompensa() { return fragmentosRecompensa; }
     public String  getDescricao()            { return descricao; }
 
+    /** Pode iniciar contra-hack durante batalha. */
+    public boolean podeCounterHack()         { return counterHack; }
+
+    protected void setCounterHack(boolean v) { counterHack = v; }
+
     public static Inimigo criarFirewallCorrompido() {
         return new Inimigo("Firewall Corrompido", 40, 10, 3, 50, 10,
             "Um fragmento de firewall infectado por código malicioso.");
@@ -52,7 +58,9 @@ public class Inimigo extends Personagem {
             "Processo corrompido que drena recursos do sistema.");
     }
     public static Inimigo criarVirusPolimorfico() {
-        return new Inimigo("Vírus Polimórfico", 35, 15, 2, 65, 15,
-            "Muda sua estrutura a cada turno para escapar de detecção.");
+        Inimigo v = new Inimigo("Vírus Polimórfico", 35, 15, 2, 65, 15,
+            "Muda sua estrutura a cada turno. Pode invadir sua consciência.");
+        v.setCounterHack(true);
+        return v;
     }
 }

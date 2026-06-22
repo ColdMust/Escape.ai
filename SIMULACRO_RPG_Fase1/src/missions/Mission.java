@@ -1,6 +1,7 @@
 package missions;
 
 import characters.Jogador;
+import io.GameIO;
 import items.Item;
 
 public class Mission {
@@ -49,7 +50,7 @@ public class Mission {
     }
 
     /** Conclui a missão e entrega as recompensas ao jogador. */
-    public void concluir(Jogador jogador) {
+    public void concluir(Jogador jogador, GameIO io) {
         if (status != Status.EM_ANDAMENTO) return;
         this.status = Status.CONCLUIDA;
 
@@ -57,13 +58,13 @@ public class Mission {
         jogador.adicionarFragmentos(fragmentosRecompensa);
         if (itemRecompensa != null) jogador.adicionarItem(itemRecompensa);
 
-        System.out.println("\n✅ Missão concluída: " + nome);
-        System.out.println("  + " + xpRecompensa + " XP");
-        System.out.println("  + " + fragmentosRecompensa + " Fragmentos de Código");
+        io.println("\n✅ Missão concluída: " + nome);
+        io.println("  + " + xpRecompensa + " XP");
+        io.println("  + " + fragmentosRecompensa + " Fragmentos de Código");
         if (itemRecompensa != null)
-            System.out.println("  + Item: " + itemRecompensa.getNome());
+            io.println("  + Item: " + itemRecompensa.getNome());
         if (subiu)
-            System.out.println("\n🎉 LEVEL UP! Agora você é nível " + jogador.getNivel() + "!");
+            io.println("\n🎉 LEVEL UP! Agora você é nível " + jogador.getNivel() + "!");
     }
 
     public String getNome()              { return nome; }

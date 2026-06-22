@@ -1,18 +1,16 @@
 @echo off
 chcp 65001 >nul
-title SIMULACRO.EXE — RPG em Java
+title SIMULACRO.EXE — Servidor Web + Java
 
 echo.
 echo  ╔══════════════════════════════════════════╗
-echo  ║        SIMULACRO.EXE  — Iniciando        ║
+echo  ║   SIMULACRO.EXE — Servidor Web + Java    ║
 echo  ╚══════════════════════════════════════════╝
 echo.
 
 cd /d "%~dp0"
 
-cd /d "%~dp0"
-
-REM ── Verifica se o Java está instalado ─────────────────────────
+REM ── Verifica JDK ──────────────────────────────────────────────
 call "%~dp0setup-java.bat"
 if %errorlevel% neq 0 (
     echo  [ERRO] javac nao encontrado.
@@ -25,23 +23,21 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM ── Cria pasta de saída ────────────────────────────────────────
 if not exist "out" mkdir out
 
-echo  Compilando fontes...
-
+echo  Compilando fontes Java...
 javac -encoding UTF-8 -d out ^
     src\io\UiState.java ^
     src\io\GameIO.java ^
     src\io\ConsoleIO.java ^
     src\io\RemoteGameIO.java ^
     src\characters\Personagem.java ^
-    src\battle\HackEscapeSystem.java ^
     src\characters\Jogador.java ^
     src\characters\Inimigo.java ^
     src\characters\AssistenciaInteligente.java ^
     src\items\Item.java ^
     src\items\DropTable.java ^
+    src\battle\HackEscapeSystem.java ^
     src\battle\BattleSystem.java ^
     src\puzzles\Puzzle.java ^
     src\puzzles\PuzzleSystem.java ^
@@ -54,24 +50,19 @@ javac -encoding UTF-8 -d out ^
     src\missions\MissionSystem.java ^
     src\levels\LevelSystem.java ^
     src\game\Game.java ^
-    src\Main.java
+    src\server\GameSession.java ^
+    src\server\GameServer.java ^
+    src\server\ServerMain.java
 
 if %errorlevel% neq 0 (
-    echo.
-    echo  [ERRO] Falha na compilacao. Verifique os arquivos em src\
+    echo  [ERRO] Falha na compilacao.
     pause
     exit /b 1
 )
 
-echo  OK! Iniciando o jogo...
+echo  OK! Iniciando servidor...
 echo.
-
-REM ── Cria o JAR executável ──────────────────────────────────────
-echo Main-Class: Main > manifest.txt
-jar cfm SIMULACRO.jar manifest.txt -C out .
-del manifest.txt
-
-REM ── Executa ────────────────────────────────────────────────────
-java -jar SIMULACRO.jar
+start http://localhost:9090
+java -cp out server.ServerMain
 
 pause

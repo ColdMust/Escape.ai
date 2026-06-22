@@ -4,16 +4,21 @@ import characters.AssistenciaInteligente;
 import characters.Inimigo;
 import characters.Jogador;
 import items.Item;
+import io.GameIO;
+import io.UiState;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class BattleSystem {
 
-    private final Scanner scanner;
+    private final GameIO io;
+    private final HackEscapeSystem hackEscape = new HackEscapeSystem();
     private static final Random RNG = new Random();
 
-    public BattleSystem(Scanner scanner) { this.scanner = scanner; }
+    private boolean hackOcorreu;
+
+    public BattleSystem(GameIO io) { this.io = io; }
 
     // ════════════════════════════════════════════════════════════
     //  Sorteio de quantidade de inimigos
@@ -47,18 +52,39 @@ public class BattleSystem {
     }
 
     public boolean iniciarBatalha(Jogador jogador, List<Inimigo> inimigos) {
-        System.out.println("\n" + "═".repeat(50));
-        System.out.println("             ⚡  BATALHA INICIADA  ⚡");
-        System.out.println("═".repeat(50));
+        return iniciarBatalha(jogador, inimigos, false);
+    }
+
+    public boolean iniciarBatalha(Jogador jogador, List<Inimigo> inimigos, boolean hackImediato) {
+        hackOcorreu = false;
+
+        io.startBattleUi(jogador.getNome(), jogador.getVida(), jogador.getVidaMax());
+        syncUi(jogador, inimigos);
+
+        io.println("\n" + "═".repeat(50));
+        io.println("             ⚡  BATALHA INICIADA  ⚡");
+        io.println("═".repeat(50));
         for (Inimigo i : inimigos)
-            System.out.println("▶ " + i.getNome() + " — \"" + i.getDescricao() + "\"");
-        System.out.println("═".repeat(50));
+            io.println("▶ " + i.getNome() + " — \"" + i.getDescricao() + "\"");
+        io.println("═".repeat(50));
+
+        if (hackImediato && !inimigos.isEmpty()) {
+            Inimigo hacker = inimigos.stream()
+                    .filter(Inimigo::podeCounterHack)
+                    .findFirst()
+                    .orElse(inimigos.get(0));
+            processarCounterHack(jogador, inimigos, hacker);
+            if (!jogador.estaVivo()) {
+                io.endBattleUi();
+                return processarResultado(jogador, inimigos);
+            }
+        }
 
         int turno = 1;
 
         while (jogador.estaVivo() && temLivres(inimigos)) {
 
-            System.out.println("\n── Turno " + turno + " " + "─".repeat(43));
+            io.println("\n── Turno " + turno + " " + "─".repeat(43));
 
             // Reset imunidades no início do turno
             for (Inimigo i : inimigos) if (i.isControlado()) i.resetarImuneTurno();
@@ -66,6 +92,7 @@ public class BattleSystem {
             if (aiAtual != null && aiAtual.isInicializando()) aiAtual.finalizarInicializacao();
 
             exibirStatus(jogador, inimigos);
+            syncUi(jogador, inimigos);
 
             int overridesAntes = jogador.getOverrides().size();
 
@@ -82,7 +109,7 @@ public class BattleSystem {
             // Passiva Engenheiro
             AssistenciaInteligente nova = jogador.passivaEngenheiro();
             if (nova != null) {
-                System.out.println("\n🤖 [ENGENHEIRO] Assistência gerada! HP:" + nova.getVida()
+                io.println("\n🤖 [ENGENHEIRO] Assistência gerada! HP:" + nova.getVida()
                         + " ATK:" + nova.getAtaque() + " DEF:" + nova.getDefesa()
                         + " — age no próximo turno.");
             }
@@ -90,7 +117,7 @@ public class BattleSystem {
             // Turno da Assistência (não age se inicializando)
             AssistenciaInteligente ai = jogador.getAssistencia();
             if (ai != null && ai.estaVivo() && !ai.isInicializando()) {
-                System.out.println(ai.agirAutomaticamente(inimigos));
+                io.println(ai.agirAutomaticamente(inimigos));
                 verificarMortesInimigos(inimigos, jogador);
             }
 
@@ -105,6 +132,7 @@ public class BattleSystem {
             pausar();
         }
 
+        io.endBattleUi();
         return processarResultado(jogador, inimigos);
     }
 
@@ -115,30 +143,30 @@ public class BattleSystem {
     private void processarAcao(Jogador jogador, List<Inimigo> inimigos, Inimigo alvo, int acao) {
         switch (acao) {
             case 1:
-                if (alvo == null) { System.out.println("Sem alvos."); break; }
+                if (alvo == null) { io.println("Sem alvos."); break; }
                 int d = jogador.calcularDano(alvo); alvo.receberDano(d);
-                System.out.println("\n⚔  Você atacou " + alvo.getNome() + " — " + d + " dano!");
+                io.println("\n⚔  Você atacou " + alvo.getNome() + " — " + d + " dano!");
                 verificarMorte(alvo, jogador);
                 break;
             case 2:
                 jogador.setDefendendo(true);
-                System.out.println("\n🛡  Postura defensiva.");
+                io.println("\n🛡  Postura defensiva.");
                 break;
             case 3:
                 usarItem(jogador);
                 break;
             case 4:
-                if (alvo == null) { System.out.println("Sem alvos."); break; }
+                if (alvo == null) { io.println("Sem alvos."); break; }
                 int dh = jogador.hackear(alvo);
-                System.out.println("\n💻 HACK em " + alvo.getNome() + "! Dano: " + dh);
+                io.println("\n💻 HACK em " + alvo.getNome() + "! Dano: " + dh);
                 verificarMorte(alvo, jogador);
                 if (alvo.estaVivo()) {
                     String msg = jogador.passivaAnalistaControle(inimigos, alvo);
-                    if (msg != null) System.out.println(msg);
+                    if (msg != null) io.println(msg);
                 }
                 break;
             default:
-                System.out.println("Ação inválida — turno perdido.");
+                io.println("Ação inválida — turno perdido.");
         }
     }
 
@@ -151,18 +179,18 @@ public class BattleSystem {
         switch (jogador.getClasse()) {
             case PROGRAMADOR: {
                 String m = jogador.passivaProgramador();
-                if (m != null) System.out.println(m);
+                if (m != null) io.println(m);
                 break;
             }
             case HACKER: {
                 Inimigo alvoDebuff = (alvo != null && alvo.estaVivo()) ? alvo
                         : getLivres(inimigos).stream().findFirst().orElse(null);
                 String m = jogador.passivaHacker(alvoDebuff);
-                if (m != null) System.out.println(m);
+                if (m != null) io.println(m);
                 break;
             }
             case ANALISTA: {
-                jogador.passivaBufOverrides().forEach(System.out::println);
+                jogador.passivaBufOverrides().forEach(io::println);
                 break;
             }
             default: break; // ENGENHEIRO não tem passiva pós-ação neste bloco
@@ -183,7 +211,7 @@ public class BattleSystem {
 
             // O Override mais recente não age no turno em que foi criado
             if (novoOverrideCriado && ov == overrides.get(overrides.size() - 1)) {
-                System.out.println("  🔧 " + ov.getNome()
+                io.println("  🔧 " + ov.getNome()
                         + " [OVERRIDE] sendo reprogramado — age no próximo turno.");
                 continue;
             }
@@ -192,18 +220,18 @@ public class BattleSystem {
             if (!alvos.isEmpty() && RNG.nextDouble() < 0.70) {
                 Inimigo t = alvos.get(RNG.nextInt(alvos.size()));
                 int dano = ov.calcularDano(t); t.receberDano(dano);
-                System.out.println("⚙ " + ov.getNome() + " [OVERRIDE] atacou "
+                io.println("⚙ " + ov.getNome() + " [OVERRIDE] atacou "
                         + t.getNome() + " — " + dano + " dano!");
                 if (!t.estaVivo())
-                    System.out.println("  💀 " + t.getNome() + " derrotado pelo Override!");
+                    io.println("  💀 " + t.getNome() + " derrotado pelo Override!");
             } else {
                 ov.setDefendendo(true);
-                System.out.println("🛡 " + ov.getNome() + " [OVERRIDE] defendendo.");
+                io.println("🛡 " + ov.getNome() + " [OVERRIDE] defendendo.");
             }
         }
 
         for (Inimigo m : mortos) {
-            System.out.println("😔 " + m.getNome() + " [OVERRIDE] foi derrotado!");
+            io.println("😔 " + m.getNome() + " [OVERRIDE] foi derrotado!");
             jogador.removerOverride(m);
         }
     }
@@ -230,24 +258,30 @@ public class BattleSystem {
 
             if (escolha.equals("AI")) {
                 int dano = ini.calcularDano(ai); ai.receberDano(dano);
-                System.out.println("💢 " + ini.getNome() + " causou " + dano + " na Assistência!");
+                io.println("💢 " + ini.getNome() + " causou " + dano + " na Assistência!");
                 if (!ai.estaVivo()) {
-                    System.out.println("  💀 Assistência destruída!");
+                    io.println("  💀 Assistência destruída!");
                     jogador.removerAssistencia();
                 }
             } else if (escolha.startsWith("OV")) {
                 int idx = Integer.parseInt(escolha.substring(2));
                 Inimigo ov = overrides.get(idx);
                 int dano = ini.calcularDano(ov); ov.receberDano(dano);
-                System.out.println("💢 " + ini.getNome() + " causou " + dano
+                io.println("💢 " + ini.getNome() + " causou " + dano
                         + " em " + ov.getNome() + " [OVERRIDE]!");
                 if (!ov.estaVivo()) {
-                    System.out.println("  💀 " + ov.getNome() + " [OVERRIDE] destruído!");
+                    io.println("  💀 " + ov.getNome() + " [OVERRIDE] destruído!");
                     jogador.removerOverride(ov);
                 }
             } else {
-                int dano = ini.calcularDano(jogador); jogador.receberDano(dano);
-                System.out.println("💢 " + ini.getNome() + " causou " + dano + " em você!");
+                if (ini.podeCounterHack() && !hackOcorreu && RNG.nextDouble() < 0.35) {
+                    processarCounterHack(jogador, inimigos, ini);
+                    if (!jogador.estaVivo()) break;
+                } else {
+                    int dano = ini.calcularDano(jogador);
+                    aplicarDanoAoJogador(jogador, dano);
+                    io.println("💢 " + ini.getNome() + " causou " + dano + " em você!");
+                }
             }
 
             ini.setDefendendo(false);
@@ -260,28 +294,28 @@ public class BattleSystem {
     // ════════════════════════════════════════════════════════════
 
     private void exibirStatus(Jogador j, List<Inimigo> inimigos) {
-        System.out.println("👤 " + j.getNome() + " Nv." + j.getNivel()
+        io.println("👤 " + j.getNome() + " Nv." + j.getNivel()
                 + " [" + j.getClasse().nome + "]  HP " + j.barraDeVida());
         if (j.getBuffAtaque() > 0 || j.getBuffDefesa() > 0)
-            System.out.println("   ↑ ATK+" + j.getBuffAtaque() + " DEF+" + j.getBuffDefesa());
+            io.println("   ↑ ATK+" + j.getBuffAtaque() + " DEF+" + j.getBuffDefesa());
 
         AssistenciaInteligente ai = j.getAssistencia();
         if (ai != null && ai.estaVivo())
-            System.out.println("🤖 Assistência  HP " + ai.barraDeVida()
+            io.println("🤖 Assistência  HP " + ai.barraDeVida()
                     + (ai.isInicializando() ? " [inicializando]" : ""));
 
         for (Inimigo ov : j.getOverrides()) {
             if (ov.estaVivo()) {
-                System.out.println("⚙  " + ov.getNome() + " [OVERRIDE]  HP " + ov.barraDeVida()
+                io.println("⚙  " + ov.getNome() + " [OVERRIDE]  HP " + ov.barraDeVida()
                         + (ov.isImuneTurno() ? " [imune]" : ""));
                 if (ov.getBuffAtaque() > 0 || ov.getBuffDefesa() > 0)
-                    System.out.println("   ↑ ATK+" + ov.getBuffAtaque() + " DEF+" + ov.getBuffDefesa());
+                    io.println("   ↑ ATK+" + ov.getBuffAtaque() + " DEF+" + ov.getBuffDefesa());
             }
         }
 
         for (Inimigo i : inimigos) {
             if (!i.isControlado())
-                System.out.println("💀 " + i.getNome() + "  HP " + i.barraDeVida()
+                io.println("💀 " + i.getNome() + "  HP " + i.barraDeVida()
                         + (i.getDebuffAtaque() > 0 || i.getDebuffDefesa() > 0
                         ? "  ↓ATK-" + i.getDebuffAtaque() + " DEF-" + i.getDebuffDefesa() : ""));
         }
@@ -292,15 +326,15 @@ public class BattleSystem {
     // ════════════════════════════════════════════════════════════
 
     private boolean processarResultado(Jogador jogador, List<Inimigo> inimigos) {
-        System.out.println("\n" + "═".repeat(50));
+        io.println("\n" + "═".repeat(50));
         if (!jogador.estaVivo()) {
-            System.out.println("           ❌  DERROTA...\nO sistema reiniciou sua instância...");
-            System.out.println("═".repeat(50));
+            io.println("           ❌  DERROTA...\nO sistema reiniciou sua instância...");
+            io.println("═".repeat(50));
             return false;
         }
 
-        System.out.println("           ✅  VITÓRIA!");
-        System.out.println("═".repeat(50));
+        io.println("           ✅  VITÓRIA!");
+        io.println("═".repeat(50));
 
         int xpTotal = 0, fragTotal = 0;
         for (Inimigo i : inimigos) {
@@ -311,15 +345,15 @@ public class BattleSystem {
             Item drop = i.rolarDrop();
             if (drop != null) {
                 jogador.adicionarItem(drop);
-                System.out.println("💾 Drop de " + i.getNome() + ": " + drop.getNome());
+                io.println("💾 Drop de " + i.getNome() + ": " + drop.getNome());
             }
         }
 
         jogador.adicionarFragmentos(fragTotal);
-        System.out.println("+ " + xpTotal + " XP  + " + fragTotal + " Fragmentos");
+        io.println("+ " + xpTotal + " XP  + " + fragTotal + " Fragmentos");
 
         if (jogador.ganharXP(xpTotal))
-            System.out.println("🎉 LEVEL UP! Agora nível " + jogador.getNivel() + "!");
+            io.println("🎉 LEVEL UP! Agora nível " + jogador.getNivel() + "!");
 
         jogador.limparOverrides();
         jogador.removerAssistencia();
@@ -342,46 +376,46 @@ public class BattleSystem {
     private Inimigo escolherAlvo(List<Inimigo> disp) {
         if (disp.isEmpty()) return null;
         if (disp.size() == 1) return disp.get(0);
-        System.out.println("\n🎯 Escolha o alvo:");
+        io.println("\n🎯 Escolha o alvo:");
         for (int i = 0; i < disp.size(); i++)
-            System.out.println("  [" + (i+1) + "] " + disp.get(i).getNome()
+            io.println("  [" + (i+1) + "] " + disp.get(i).getNome()
                     + " HP:" + disp.get(i).getVida() + "/" + disp.get(i).getVidaMax());
-        System.out.print("  Alvo: ");
+        io.print("  Alvo: ");
         try {
-            int idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
+            int idx = Integer.parseInt(io.readLine().trim()) - 1;
             if (idx >= 0 && idx < disp.size()) return disp.get(idx);
         } catch (NumberFormatException ignored) {}
         return disp.get(0);
     }
 
     private int escolherAcao() {
-        System.out.println("\n┌─ Ação ──────────────────┐");
-        System.out.println("│ [1]⚔ Atacar  [2]🛡 Def  │");
-        System.out.println("│ [3]🎒 Item   [4]💻 Hack  │");
-        System.out.println("└─────────────────────────┘");
-        System.out.print("  Escolha: ");
-        try { return Integer.parseInt(scanner.nextLine().trim()); }
+        io.println("\n┌─ Ação ──────────────────┐");
+        io.println("│ [1]⚔ Atacar  [2]🛡 Def  │");
+        io.println("│ [3]🎒 Item   [4]💻 Hack  │");
+        io.println("└─────────────────────────┘");
+        io.print("  Escolha: ");
+        try { return Integer.parseInt(io.readLine().trim()); }
         catch (NumberFormatException e) { return -1; }
     }
 
     private void usarItem(Jogador jogador) {
-        if (jogador.getInventario().isEmpty()) { System.out.println("🎒 Inventário vazio!"); return; }
-        System.out.println("🎒 INVENTÁRIO:");
+        if (jogador.getInventario().isEmpty()) { io.println("🎒 Inventário vazio!"); return; }
+        io.println("🎒 INVENTÁRIO:");
         for (int i = 0; i < jogador.getInventario().size(); i++)
-            System.out.println("  [" + (i+1) + "] " + jogador.getInventario().get(i));
-        System.out.print("  Item (0=cancelar): ");
+            io.println("  [" + (i+1) + "] " + jogador.getInventario().get(i));
+        io.print("  Item (0=cancelar): ");
         try {
-            int idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
+            int idx = Integer.parseInt(io.readLine().trim()) - 1;
             if (idx == -1) return;
             Item it = jogador.getInventario().get(idx);
             jogador.usarItem(idx);
-            System.out.println("✅ Usado: " + it.getNome());
-        } catch (Exception e) { System.out.println("Inválido."); }
+            io.println("✅ Usado: " + it.getNome());
+        } catch (Exception e) { io.println("Inválido."); }
     }
 
     private void verificarMorte(Inimigo i, Jogador jogador) {
         if (!i.estaVivo()) {
-            System.out.println("  💀 " + i.getNome() + " derrotado!");
+            io.println("  💀 " + i.getNome() + " derrotado!");
             jogador.removerOverride(i);
         }
     }
@@ -390,15 +424,40 @@ public class BattleSystem {
         inimigos.stream()
                 .filter(i -> !i.estaVivo() && i.isControlado())
                 .forEach(i -> {
-                    System.out.println("  💀 " + i.getNome() + " [OVERRIDE] derrotado!");
+                    io.println("  💀 " + i.getNome() + " [OVERRIDE] derrotado!");
                     jogador.removerOverride(i);
                 });
     }
 
     private void pausar() {
-        System.out.print("\n[Enter para continuar...]");
-        scanner.nextLine();
+        io.print("\n[Enter para continuar...]");
+        io.readLine();
+    }
+
+    private void processarCounterHack(Jogador jogador, List<Inimigo> inimigos, Inimigo ini) {
+        hackOcorreu = true;
+        syncUi(jogador, inimigos);
+        boolean escapou = hackEscape.executar(jogador, ini, io);
+        syncUi(jogador, inimigos);
+        if (escapou) {
+            int dano = jogador.calcularDano(ini);
+            ini.receberDano(dano);
+            io.println("💥 " + ini.getNome() + " recebeu " + dano + " de dano por falha no hack!");
+            verificarMorte(ini, jogador);
+        }
+    }
+
+    private void aplicarDanoAoJogador(Jogador jogador, int dano) {
+        jogador.receberDano(dano);
+    }
+
+    private void syncUi(Jogador jogador, List<Inimigo> inimigos) {
+        List<UiState.EnemyBar> bars = new ArrayList<>();
+        for (Inimigo i : inimigos) {
+            if (!i.isControlado() && i.estaVivo()) {
+                bars.add(new UiState.EnemyBar(i.getNome(), i.getVida(), i.getVidaMax()));
+            }
+        }
+        io.syncBattleUi(jogador.getNome(), jogador.getVida(), jogador.getVidaMax(), bars);
     }
 }
-
-
